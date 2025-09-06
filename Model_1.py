@@ -15,7 +15,7 @@ def train_runoff_model():
     
     # --- 1. Load Data ---
     try:
-        df = pd.read_csv("runoff_coefficient_dataset_simplified.csv")
+        df = pd.read_csv("Runoff_coeff_dataset.csv")
         print("Dataset loaded successfully.")
     except FileNotFoundError:
         print("Error: 'runoff_coefficient_dataset_simplified.csv' not found.")
@@ -31,16 +31,21 @@ def train_runoff_model():
     # Using one-hot encoding for better model performance
     X = pd.get_dummies(X, columns=['roof_type', 'region'], drop_first=True)
 
-    # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+        X, y, test_size=0.25, random_state=50
     )
     print(f"Data split: {len(X_train)} training samples, {len(X_test)} testing samples.")
 
     # --- 3. Model Training ---
     print("Training the LightGBM model...")
     # Initialize the LightGBM Regressor
-    model = lgb.LGBMRegressor(random_state=42)
+    model = lgb.LGBMRegressor(
+        random_state=50,
+        n_estimators=1000,        # Increased from 100 to build more trees
+        learning_rate=0.01,      # Reduced from 0.1 for more careful learning
+        num_leaves=31,           # Controls tree complexity
+        max_depth=-1,            # No limit on tree depth
+        n_jobs=-1)
     
     # Train the model
     model.fit(X_train, y_train)

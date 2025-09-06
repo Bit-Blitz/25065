@@ -132,7 +132,7 @@ if __name__ == "__main__":
     NUMBER_OF_SAMPLES = 20000
 
     runoff_dataset = generate_runoff_data(NUMBER_OF_SAMPLES)
-    runoff_dataset_path = "runoff_coefficient_dataset_simplified.csv"
+    runoff_dataset_path = "Runoff_coeff_dataset.csv"
     runoff_dataset.to_csv(runoff_dataset_path, index=False)
     
     print(f"\nSuccessfully generated '{runoff_dataset_path}'")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     print("-" * 33)
 
     harvesting_dataset = generate_harvesting_data(runoff_dataset)
-    harvesting_dataset_path = "water_harvesting_dataset_simplified.csv"
+    harvesting_dataset_path = "Harvesting_dataset.csv"
     harvesting_dataset.to_csv(harvesting_dataset_path, index=False)
     
     print(f"\nSuccessfully generated '{harvesting_dataset_path}'")

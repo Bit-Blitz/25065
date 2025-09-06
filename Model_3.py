@@ -1,90 +1,86 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.metrics import r2_score, mean_absolute_error
+import numpy as np
 import lightgbm as lgb # type: ignore
 import pickle
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
-def train_water_loss_model():
+def train_direct_harvesting_model():
     """
-    Implements the physics-informed hybrid model. It trains a model to predict
-    the amount of water *lost* due to inefficiencies like first flush.
+    Loads the synthetic dataset and trains a single, end-to-end LightGBM model
+    to directly predict the final annual harvestable water volume.
     """
-    print("--- Training Model 3: Water Loss Predictor (Hybrid Approach) ---")
-
-    # 1. Load the dataset
+    print("--- Training Model 3: Direct Water Harvesting Predictor ---")
+    
+    # --- 1. Load Data ---
     try:
-        df = pd.read_csv("water_harvesting_dataset_simplified.csv")
+        df = pd.read_csv("Harvesting_dataset.csv")
         print("Dataset loaded successfully.")
     except FileNotFoundError:
-        print("Error: 'water_harvesting_dataset_simplified.csv' not found.")
-        print("Please run the data generation script first.")
+        print("Error: 'Harvesting_dataset.csv' not found.")
+        print("Please run the 'generate_simplified_datasets.py' script first.")
         return
 
-    # 2. Physics-Based Calculation
-    df['potential_water_liters'] = df['roof_area_sq_m'] * df['annual_rainfall_mm'] * df['runoff_coefficient']
-
-    # 3. Define Target for the ML Correction Model
-    df['water_loss_liters'] = df['potential_water_liters'] - df['annual_harvestable_water_liters']
-
-    # 4. Define Features (X) and Target (y) for the loss model
-    features = ['roof_type', 'roof_age']
-    target = 'water_loss_liters'
+    # --- 2. Preprocessing ---
+    # Define features (X) and the direct target (y) as per the specified inputs
+    features = [
+        'roof_area_sq_m',
+        'roof_type',
+        'runoff_coefficient',
+        'annual_rainfall_mm'
+    ]
     X = df[features]
-    y = df[target]
+    y = df['annual_harvestable_water_liters']
 
-    # 5. Preprocessing Pipeline
-    categorical_features = ['roof_type']
-    numerical_features = ['roof_age']
+    # Convert the categorical feature into a numerical format
+    X = pd.get_dummies(X, columns=['roof_type'], drop_first=True)
 
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', 'passthrough', numerical_features),
-            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
-        ],
-        remainder='passthrough'
-    )
-
-    # 6. Define the model
-    model = lgb.LGBMRegressor(n_estimators=50, learning_rate=0.1, random_state=42)
-
-    # 7. Create the full pipeline
-    pipeline = Pipeline(steps=[('preprocessor', preprocessor),
-                               ('regressor', model)])
-
-    # 8. Split data into training and testing sets
+    # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
     print(f"Data split: {len(X_train)} training samples, {len(X_test)} testing samples.")
 
-    # 9. Train the loss prediction model
-    print("Training the water loss prediction model...")
-    pipeline.fit(X_train, y_train)
+    # --- 3. Model Training ---
+    print("Training the direct LightGBM model...")
+    
+    # Using the tuned hyperparameters for better performance
+    model = lgb.LGBMRegressor(
+        n_estimators=500,
+        learning_rate=0.05,
+        num_leaves=31,
+        max_depth=-1,
+        random_state=42,
+        n_jobs=-1
+    )
+    
+    model.fit(X_train, y_train)
     print("Training complete.")
 
-    # 10. Evaluate the model
-    print("\n--- Model Evaluation ---")
-    y_pred = pipeline.predict(X_test)
-    r2 = r2_score(y_test, y_pred)
+    # --- 4. Model Evaluation ---
+    y_pred = model.predict(X_test)
+
+    # --- 4a. REGRESSION Metrics ---
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
     mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
 
+    print("\n--- REGRESSION METRICS ---")
+    print(f"Root Mean Squared Error (RMSE): {rmse:.2f} Liters")
+    print(f"Mean Absolute Error (MAE): {mae:.2f} Liters")
     print(f"R-squared (R²): {r2:.4f}")
-    print(f"Mean Absolute Error (MAE): {mae:.2f} liters")
-
-    # 11. Save the trained model pipeline using pickle
-    model_filename = "water_loss_model.pkl"
-    with open(model_filename, 'wb') as file:
-        pickle.dump(pipeline, file)
-    print(f"\nModel saved successfully as '{model_filename}'")
+    print("--------------------------")
     
-    print("\n--- How to Use This Hybrid Model ---")
-    print("1. Calculate 'potential_water_liters' using the physical formula.")
-    print("2. Load 'water_loss_model.pkl' and use it to predict the 'predicted_loss'.")
-    print("3. Final Prediction = potential_water_liters - predicted_loss")
+    
+    # --- 5. Save the Model ---
+    model_filename = "harvesting_model_direct.pkl"
+    with open(model_filename, 'wb') as file:
+        pickle.dump(model, file)
+    
+    print(f"\nModel successfully saved to '{model_filename}'")
+
 
 if __name__ == "__main__":
-    train_water_loss_model()
+    train_direct_harvesting_model()
 
