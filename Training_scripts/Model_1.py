@@ -15,11 +15,11 @@ def train_runoff_model():
     
     # --- 1. Load Data ---
     try:
-        df = pd.read_csv("Runoff_coeff_dataset.csv")
+        df = pd.read_csv("Datasets/Runoff_coeff_dataset.csv")
         print("Dataset loaded successfully.")
     except FileNotFoundError:
-        print("Error: 'runoff_coefficient_dataset_simplified.csv' not found.")
-        print("Please run the 'generate_simplified_datasets.py' script first.")
+        print("Error: 'Runoff_coeff_dataset.csv' not found.")
+        print("Please run the 'Synthetic_data.py' script first.")
         return
 
     # --- 2. Preprocessing ---

@@ -14,11 +14,11 @@ def train_direct_harvesting_model():
     
     # --- 1. Load Data ---
     try:
-        df = pd.read_csv("Harvesting_dataset.csv")
+        df = pd.read_csv("Datasets/Harvesting_dataset.csv")
         print("Dataset loaded successfully.")
     except FileNotFoundError:
         print("Error: 'Harvesting_dataset.csv' not found.")
-        print("Please run the 'generate_simplified_datasets.py' script first.")
+        print("Please run the 'Synthetic_data.py' script first.")
         return
 
     # --- 2. Preprocessing ---
